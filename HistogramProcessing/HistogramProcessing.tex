@@ -1,0 +1,300 @@
+\documentclass[notheorems,serif,table,compress]{beamer}  %dvipdfm选项是关键,否则编译统统通不过
+%%------------------------常用宏包------------------------
+%%注意, beamer 会默认使用下列宏包: amsthm, graphicx, hyperref, color, xcolor, 等等
+\usepackage{fontspec,xunicode,xltxtra}  % for XeTeX
+\usepackage{verbatim}
+\usepackage{mathabx}
+\usepackage{latexsym}
+\usepackage{amsfonts,amssymb}
+\usepackage{styles/iplouclistings}
+\usepackage{fancybox}
+\usepackage{colortbl}
+\usepackage{tcolorbox}
+%\usepackage[T1]{fontenc}
+%\usepackage{bookman}
+\usepackage{subfigure}
+\usepackage{hyperref}
+\usepackage{listings}
+\usepackage{animate}
+\usepackage[absolute,overlay]{textpos}
+\usepackage{graphicx}
+\usepackage{tikz}
+\usepackage[americaninductors,europeanresistors]{circuitikz}
+\usepackage{tikz}
+\usepackage{fancybox}     %% 定义zhushadow时用到
+\usepackage{pifont} %ding用到
+\newsavebox{\mysaveboxOne}  %%为了在only中使用lstlisting
+\newsavebox{\mysaveboxTwo}
+\newsavebox{\mysaveboxThree}
+\newsavebox{\mysaveboxFour}
+\newsavebox{\mysaveboxFive}
+\newsavebox{\mysaveboxSix}
+\newsavebox{\mysaveboxSeven}
+\newcommand\zhushadow[2][purple]{\hskip5pt\shadowbox{\color{#1}\small\kai #2\vspace{3mm}}}
+
+%%------------------------ThemeColorFont------------------------
+%% Presentation Themes
+% \usetheme[<options>]{<name list>}
+%\usetheme{Madrid}
+\usetheme{Berkeley}
+%% Inner Themes双精度计算
+% \useinnertheme[<options>]{<name>}
+%% Outer Themes
+% \useoutertheme[<options>]{<name>}
+%\useoutertheme{miniframes} 
+%% Color Themes 
+%\usecolortheme[<options>]{<name list>}
+%% Font Themes
+\usefonttheme{serif}
+\setbeamertemplate{background canvas}[vertical shading][bottom=white,top=structure.fg!7] %%背景色, 上25%的蓝, 过渡到下白.
+\setbeamertemplate{theorems}[numbered]
+\setbeamertemplate{navigation symbols}{}   %% 去掉页面下方默认的导航条.
+\usepackage{styles/zhfontcfg}
+%\setsansfont[Mapping=tex-text]{文泉驿正黑}  %% 需要fontspec宏包
+     %如果装了Adobe Acrobat,可在font.conf中配置Adobe字体的路径以使用其中文字体
+     %也可直接使用系统中的中文字体如SimSun,SimHei,微软雅黑 等
+     %原来beamer用的字体是sans family;注意Mapping的大小写,不能写错
+     %设置字体时也可以直接用字体名，以下三种方式等同：
+     %\setromanfont[BoldFont={黑体}]{宋体}
+     %\setromanfont[BoldFont={SimHei}]{SimSun}
+     %\setromanfont[BoldFont={"[simhei.ttf]"}]{"[simsun.ttc]"}
+%%------------------------MISC------------------------
+\graphicspath{{figures/}}         %% 图片路径. 本文的图片都放在这个文件夹里了.
+%%------------------------listing------------------------
+%\lstset{language=[LaTeX]TeX,Python}
+%%------------------------正文------------------------
+\begin{document}
+\XeTeXlinebreaklocale "zh"         % 表示用中文的断行
+\XeTeXlinebreakskip = 0pt plus 1pt % 多一点调整的空间
+%%----------------------------------------------------------
+%% This is only inserted into the PDF information catalog. Can be left
+%% out.
+%%%
+%% Delete this, if you do not want the table of contents to pop up at
+%% the beginning of each subsection:
+%\AtBeginSection[]{                              % 在每个Section前都会加入的Frame
+%  \frame<handout:0>{
+%    \frametitle{Contents}\small
+%    \tableofcontents[current,currentsubsection]
+%  }
+%}
+%
+%\AtBeginSubsection[]                            % 在每个子段落之前
+%{
+%  \frame<handout:0>                             % handout:0 表示只在手稿中出现
+%  {
+%    \frametitle{Contents}\small
+%    \tableofcontents[current,currentsubsection] % 显示在目录中加亮的当前章节
+%  }
+%}
+
+\setbeamertemplate{caption}{\raggedright\insertcaption\par}
+
+%%----------------------------------------------------------
+\logo{\includegraphics[scale=0.13]{ouclogo.png}}
+\title{Histogram Processing}
+%\subtitle{Bottom-Up Saliency Detection Model Based on Human Visual Sensitivity and Amplitude Spectrum}
+\subtitle{直方图处理}
+\author[]{\textcolor{olive}{TangNing}}
+\institute[CVBIOUC]
+{
+\small\textcolor{violet}{CVBIOUC\\
+%Ocean University of China\\
+\url{http://vision.ouc.edu.cn/~zhenghaiyong}}
+}
+%\date[]{}
+%\titlegraphic{
+%\includegraphics[height=1.0cm]{ouc-logo.jpg}}
+\frame{ \titlepage }
+%%----------------------------------------------------------
+%\section*{Contents}
+\frame{\frametitle{Contents} \tableofcontents}
+%%----------------------------------------------------------
+\def\hilite<#1>{\temporal<#1>{\color{blue!15}}{\color{black}}{\color{black}}}
+\newcommand{\shadow}[2][purple]{\hskip5pt\shadowbox{\color{#1}\small \kai #2\vspace{3mm}}}
+\newcommand{\colorrbox}[2][purple]{\doublebox{\color{#1}\small \kai#2}}
+
+%============================================================================
+
+\section{Introduction}
+
+%==========================================================================
+
+\begin{frame}[fragile]
+\frametitle{Histogram}
+\begin{enumerate}
+\item {\color{blue}The definition of histogram:}\\
+\begin{center}
+$h(r_k) = n_k$ \quad $k=0,1,...,L-1$
+\end{center}
+where $r_k$ is the kth intensity value and $n_k$ is the number of pixels in the image with intensity $r_k$.
+\item {\color{blue}Normalize a hitstogram:}\\
+\begin{center}
+$p(r_k)=\cfrac{n_k}{MN}$\quad $k=0,1,...,L-1$
+\end{center}
+$p(r_k)$ is the probability of occurrrnce of intensity level $r_k$ in an image.The sum of all components of a normalized histogram is equal to 1.
+\end{enumerate}
+
+\end{frame}
+\begin{frame}
+\frametitle{Four basic image types and their correponding histograms}
+\begin{figure}
+\begin{center}
+\subfigure{
+\includegraphics[width=0.2\textwidth]{1.png}}
+\subfigure{
+\includegraphics[width=0.25\textwidth]{11.png}}
+\end{center}
+\caption{dark image}
+\begin{center}
+\subfigure{
+\includegraphics[width=0.2\textwidth]{2.png}}
+\subfigure{
+\includegraphics[width=0.25\textwidth]{22.png}}
+\end{center}
+\caption{light image}
+\end{figure}
+\end{frame}
+\begin{frame}
+\frametitle{Four basic image types and their correponding histograms}
+\begin{figure}
+\begin{center}
+\subfigure{
+\includegraphics[width=0.2\textwidth]{3.png}}
+\subfigure{
+\includegraphics[width=0.25\textwidth]{33.png}}
+\end{center}
+\caption{low contrast image}
+\begin{center}
+\subfigure{
+\includegraphics[width=0.2\textwidth]{4.png}}
+\subfigure{
+\includegraphics[width=0.25\textwidth]{44.png}}
+\end{center}
+\caption{high contrast image}
+\end{figure}
+\end{frame}
+%============================================================================
+\section{Histogram Equalization}
+%===============================================================================
+\begin{frame}
+\frametitle{Transformations}
+Transformations(intensity mappings)of the form:\\
+\begin{equation}
+s=T(r)\quad 0\leq r\leq L-1
+\end{equation}\\
+{\color{blue}(a)}$T(r)$is a monotonically increasing function in the interval $0\leq r\leq L-1$ .\\
+{\color{blue}(b)}$0\leq T(r)\leq L-1$ for $0\leq r\leq L-1$ .
+\end{frame}
+\begin{frame}
+\frametitle{Histogram Equalization}
+\begin{align} \label{eq:eps}
+&s_k=T(r_k)=(L-1)\sum_{j=0}^k p_r(r_j)  \\
+&=\cfrac{(L-1)}{MN}\sum_{j=0}^k n_j \quad k=0,1,2...,L-1\nonumber
+\end{align}
+a processed image is obtained by mapping rach pixel in the input image with intensity    $r_k$ into a corresponding pixel with level $s_k$ in the output image,using(\ref{eq:eps}).The transformation $T(r_k)$ in this equation is called a \emph{histogram equalization}.
+\end{frame}
+\begin{frame}
+\frametitle{Result}
+\begin{figure}
+\begin{center}
+\subfigure[]{
+\includegraphics[width=0.12\textwidth]{origin.jpg}}
+\subfigure[]{
+\includegraphics[width=0.25\textwidth]{origin.png}}
+\end{center}
+\caption{(a)Origin image.(b)Histogram of (a).}
+\begin{center}
+\subfigure[]{
+\includegraphics[width=0.12\textwidth]{histeq.jpg}}
+\subfigure[]{
+\includegraphics[width=0.25\textwidth]{histeq.png}}
+\end{center}
+\caption{(c)Histogram-equalized image.(d)Histogram of (c).}
+\end{figure}
+\end{frame}
+%============================================================================
+\section{Histogram Matching}
+%===============================================================================
+\begin{frame}
+\frametitle{Histogram Matching}
+{\color{blue}(a)}Obtain the values of $s$ by using the histogram equalization transformation:
+\begin{align} 
+&s_k=T(r_k)=(L-1)\sum_{j=0}^k p_r(r_j)  \\
+&=\cfrac{(L-1)}{MN}\sum_{j=0}^k n_j \quad k=0,1,2...,L-1\nonumber
+\end{align}
+{\color{blue}(b)}Compute all values of the transformation function $G$ using the specified PDF:
+\begin{equation} 
+G(z_q)=(L-1)\sum_{i=0}^q p_z(z_i) 
+\end{equation}
+\end{frame}
+\begin{frame}
+\frametitle{Histogram Matching}
+{\color{blue}(c)}Find the corresponding value of$z_q$ so that $G(z_q)$ is closest to $s_k$ :
+\begin{equation} 
+G(z_q)=s_k
+\end{equation}
+{\color{blue}(d)}Get the desired value $z_q$ by obtaining the inverse transformation:
+\begin{equation} 
+z_q=G^{-1}(s_k)
+\end{equation}
+\end{frame}
+\begin{frame}
+\frametitle{Result}
+\begin{figure}
+\begin{center}
+\subfigure[]{
+\includegraphics[width=0.12\textwidth]{origin.jpg}}
+\subfigure[]{
+\includegraphics[width=0.25\textwidth]{origin.png}}
+\end{center}
+\caption{(a)Origin image.(b)Histogram of (a).}
+\begin{center}
+\subfigure[]{
+\includegraphics[width=0.12\textwidth]{histsp.jpg}}
+\subfigure[]{
+\includegraphics[width=0.25\textwidth]{histsp.png}}
+\end{center}
+\caption{(c)Histogram-specified image.(d)Histogram of (c).}
+\end{figure}
+\end{frame}
+%============================================================================
+\section{Local Histogram Equalization}
+%===============================================================================
+\begin{frame}
+\frametitle{Local Histogram Equalization}
+Use local histogram equalization with a neighborhood of size $3\times3$:
+\begin{figure}
+\begin{center}
+\subfigure[]{
+\includegraphics[width=0.2\textwidth]{input.png}}
+\subfigure[]{
+\includegraphics[width=0.2\textwidth]{output.jpg}}
+\subfigure[]{
+\includegraphics[width=0.2\textwidth]{book.png}}
+\end{center}
+\caption{(a)Origin image.(b)Result of local histogram equalization applied to (a).}
+\end{figure}
+\end{frame}
+
+%============================================================================
+\section{Using Histogram Statistics for Image Enhancement}
+%===============================================================================
+\begin{frame}
+\frametitle{Using Histogram Statistics for Image Enhancement}
+Use local histogram statistics with a neighborhood of size $3\times3$:
+\begin{figure}
+\begin{center}
+\subfigure[]{
+\includegraphics[width=0.2\textwidth]{imgehorigin.png}}
+\subfigure[]{
+\includegraphics[width=0.2\textwidth]{imgeh.jpg}}
+\subfigure[]{
+\includegraphics[width=0.2\textwidth]{wrong.jpg}}
+\end{center}
+\caption{(a)Origin image.(b)Image enhanced using local histogram statistics.}
+\end{figure}
+\end{frame}
+
+
+\end{document}
